@@ -1,0 +1,526 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Zero Conditional Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap">
+<style>
+/* Layout: a presenter's board. Tab bar on top, one large stage per tab, a plain-language note panel beneath.
+   Blue marks the condition (if-clause), orange marks the result. The same two colours are used on every tab. */
+:root{
+  --bg:#EDF1F5;--surface:#FFFFFF;--surface-2:#E1E8EE;--ink:#12202C;--ink-2:#44566A;--line:#C5D0DA;
+  --cond:#1448A0;--cond-bg:#DAE7FB;--conj-bg:#1448A0;--conj-fg:#FFFFFF;
+  --res:#A3420A;--res-bg:#FCE5D2;--res-fill:#E8680F;
+  --ok:#16643F;--ok-bg:#D6EFE1;--bad:#A8231B;--bad-bg:#F9D9D6;--focus:#1448A0;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  --zoom:1;font-size:calc(16px * var(--zoom));
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1620;--surface:#15212D;--surface-2:#1F2E3D;--ink:#E9EFF4;--ink-2:#A3B4C3;--line:#2B3C4D;
+    --cond:#9CC0FF;--cond-bg:#1B3159;--conj-bg:#9CC0FF;--conj-fg:#0D1620;
+    --res:#FFB783;--res-bg:#4B2B13;--res-fill:#F59040;
+    --ok:#7BDCA9;--ok-bg:#133C28;--bad:#FFA39B;--bad-bg:#4C1F1C;--focus:#9CC0FF;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1620;--surface:#15212D;--surface-2:#1F2E3D;--ink:#E9EFF4;--ink-2:#A3B4C3;--line:#2B3C4D;
+  --cond:#9CC0FF;--cond-bg:#1B3159;--conj-bg:#9CC0FF;--conj-fg:#0D1620;
+  --res:#FFB783;--res-bg:#4B2B13;--res-fill:#F59040;
+  --ok:#7BDCA9;--ok-bg:#133C28;--bad:#FFA39B;--bad-bg:#4C1F1C;--focus:#9CC0FF;color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+h1,h2,h3,p,ul,ol{margin:0}
+h1,h2,h3{text-wrap:balance}
+body{background:var(--bg);color:var(--ink);font:400 1rem/1.5 var(--body);
+  padding-block:20px 56px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1120px;margin-inline:auto;display:grid;gap:18px}
+
+/* header + tabs */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand h1{font:700 1.6rem/1.1 var(--display);letter-spacing:-.015em}
+.brand p{color:var(--ink-2);font-size:.9rem;margin-top:2px}
+.zoom{display:flex;gap:6px}
+.sbtn{min-width:46px;min-height:42px;padding:0 12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;cursor:pointer;font:700 1rem var(--body)}
+.sbtn:hover{border-color:var(--ink)}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1.5px solid var(--line)}
+.tab{flex:none;padding:12px 18px;border:0;background:none;cursor:pointer;font:700 1.05rem var(--body);color:var(--ink-2);border-bottom:4px solid transparent;margin-bottom:-1.5px}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.tab:focus-visible,.sbtn:focus-visible,.btn:focus-visible,.tile:focus-visible,.kcard:focus-visible,.drow:focus-visible,[data-part]:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+
+.panel{display:grid;gap:16px}
+
+/* stage + cards */
+.stage,.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:clamp(18px,4vw,38px);display:grid;gap:clamp(14px,2.5vw,26px)}
+.card{border-radius:18px;padding:clamp(16px,3vw,26px);gap:14px;align-content:start}
+.eyebrow{font:700 .8rem var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.big{font:700 clamp(1.6rem,4vw,2.8rem)/1.2 var(--display);letter-spacing:-.015em;max-width:26ch}
+.big em{font-style:normal;text-decoration:underline;text-decoration-thickness:.12em;text-underline-offset:.14em;text-decoration-color:var(--res-fill)}
+
+/* sentence */
+.sentence{font:600 clamp(1.7rem,4.6vw,3.4rem)/1.9 var(--display);letter-spacing:-.01em;text-wrap:pretty}
+.sentence.sm{font-size:clamp(1.25rem,3vw,2rem)}
+.part{display:inline;padding:.04em .28em .1em;border-radius:.3em;cursor:pointer;transition:opacity .2s,box-shadow .2s;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.part.conj{background:var(--conj-bg);color:var(--conj-fg)}
+.part.ifc{background:var(--cond-bg);color:var(--cond)}
+.part.res{background:var(--res-bg);color:var(--res)}
+.part.comma{background:var(--surface-2);color:var(--ink);padding-inline:.2em;margin-left:.08em}
+.part.static{cursor:default}
+.has-sel .part:not(.on){opacity:.4}
+.part.on{box-shadow:0 0 0 .08em var(--ink)}
+.verb{position:relative;display:inline-block;line-height:1.15;font-weight:inherit}
+.show-tenses .verb{border-bottom:.07em solid currentColor}
+.show-tenses .verb::after{content:"present simple";position:absolute;left:50%;top:100%;transform:translate(-50%,.25rem);font:700 .72rem/1 var(--body);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.sentence.show-tenses{line-height:2.5}
+.show-tenses .part.ifc,.show-tenses .part.res{padding-bottom:1.2rem}
+
+/* formula */
+.formula{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.fchip{display:inline-flex;align-items:center;min-height:42px;padding:0 16px;border-radius:999px;border:2px solid transparent;font:700 1.05rem var(--body);cursor:pointer;transition:border-color .15s,opacity .2s}
+.fchip.conj{background:var(--conj-bg);color:var(--conj-fg)}
+.fchip.ifc{background:var(--cond-bg);color:var(--cond)}
+.fchip.res{background:var(--res-bg);color:var(--res)}
+.fchip.comma{background:var(--surface-2);color:var(--ink)}
+.fchip.ghost{border:2px dashed var(--line);color:var(--ink-2);background:transparent}
+.fchip.on{border-color:var(--ink)}
+.formula.has-sel .fchip:not(.on){opacity:.45}
+.fplus{font:700 1.3rem var(--body);color:var(--ink-2)}
+
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:10px}
+.btn{min-height:46px;padding:0 18px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;font:700 1rem var(--body);color:var(--ink);transition:background .15s,border-color .15s}
+.btn:hover:not(:disabled){border-color:var(--ink)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn[aria-pressed="true"]{background:var(--surface-2);border-color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:default}
+
+/* note panel */
+.note{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(16px,3vw,28px);display:grid;gap:10px;align-content:start;min-height:9rem}
+.note h2{font:700 1.45rem/1.2 var(--display)}
+.note .b{font-size:1.2rem;max-width:60ch}
+.k{display:inline-block;justify-self:start;background:var(--surface-2);padding:6px 12px;border-radius:8px;font-weight:700}
+.exlist{list-style:none;padding:0;display:grid;gap:2px}
+
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:12px}
+.tile{display:grid;gap:4px;padding:16px 18px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;text-align:left;font:inherit;align-content:start}
+.tile:hover{border-color:var(--ink)}
+.tile[aria-pressed="true"]{border-color:var(--ink);background:var(--surface-2)}
+.tile .l{font:700 1.15rem/1.2 var(--display)}
+.tile .q{color:var(--ink-2);font-size:.95rem}
+
+/* repeat test */
+.slots{list-style:none;padding:0;display:grid;gap:8px}
+.slot{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:10px 14px;border-radius:12px;border:1.5px dashed var(--line);color:var(--ink-2)}
+.slot .n{min-width:5rem;font-weight:700}
+.slot.done{border:1.5px solid var(--line);background:var(--surface);color:var(--ink)}
+.slot.fresh{animation:pop .35s ease both}
+.chip{padding:3px 10px;border-radius:8px;font-weight:700}
+.chip.cond{background:var(--cond-bg);color:var(--cond)}
+.chip.res{background:var(--res-bg);color:var(--res)}
+.slot .tick{margin-left:auto;color:var(--ok);font-weight:700;font-size:1.2rem}
+.verdict{font-size:1.15rem;font-weight:700}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* compare */
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px}
+.card h3{font:700 1.3rem var(--display)}
+.dw{text-decoration:underline;text-decoration-thickness:.1em;text-underline-offset:.15em}
+.tl{display:grid;gap:4px;padding-top:8px}
+.tl-track{position:relative;height:14px;border-radius:99px;background:var(--surface-2)}
+.tl-fill{position:absolute;inset:0;border-radius:99px;background:repeating-linear-gradient(90deg,var(--ink) 0 16px,var(--ink-2) 16px 20px)}
+.tl-dot{position:absolute;left:84%;top:50%;width:28px;height:28px;border-radius:50%;background:var(--res-fill);border:3px solid var(--surface);transform:translate(-50%,-50%)}
+.tl-now{position:absolute;left:40%;top:-7px;bottom:-7px;width:3px;background:var(--ink-2);border-radius:2px}
+.tl-labels{position:relative;height:1.6rem}
+.tl-labels span{position:absolute;top:8px;font-size:.9rem;color:var(--ink-2)}
+.a-m{transform:translateX(-50%)}.a-e{transform:translateX(-100%)}
+.cap{font-size:1.05rem}
+.diff{display:grid;gap:8px}
+.dhead,.drow{display:grid;grid-template-columns:8rem 1fr 1fr;gap:10px}
+.dhead span{font:700 .8rem var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.drow{cursor:pointer}
+.dl{font:700 .85rem var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);align-self:center}
+.dc{padding:14px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:1.1rem}
+.drow:not(.open) .dc{border-style:dashed;color:var(--ink-2);display:flex;align-items:center}
+.drow:hover .dc{border-color:var(--ink)}
+
+/* errors + check */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px}
+.esent{font:600 clamp(1.3rem,3vw,1.8rem)/1.6 var(--display)}
+.wrong{color:var(--bad);background:var(--bad-bg);padding:.02em .25em;border-radius:.25em;text-decoration:underline wavy var(--bad);text-underline-offset:.2em}
+del{color:var(--bad);text-decoration:line-through}
+ins{color:var(--ok);background:var(--ok-bg);text-decoration:none;padding:.02em .25em;border-radius:.25em}
+.why{font-size:1.1rem;color:var(--ink-2);min-height:3.3rem}
+.why.on{color:var(--ink)}
+.kcard{display:grid;gap:10px;align-content:start;text-align:left;width:100%;padding:clamp(16px,3vw,24px);border-radius:18px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;font:inherit;min-height:9.5rem}
+.kcard:hover{border-color:var(--ink)}
+.kcard .ks{font:600 clamp(1.2rem,2.6vw,1.6rem)/1.4 var(--display)}
+.kcard .kp{color:var(--ink-2);font-size:1rem}
+.verd{justify-self:start;padding:4px 12px;border-radius:8px;font-weight:700}
+.verd.yes{background:var(--ok-bg);color:var(--ok)}
+.verd.no{background:var(--bad-bg);color:var(--bad)}
+
+@media (max-width:700px){
+  .dhead,.drow{grid-template-columns:1fr 1fr}
+  .dhead span:first-child{display:none}
+  .dl{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Zero Conditional</h1>
+      <p>Teacher board. Click anything to explain it.</p>
+    </div>
+    <div class="zoom" role="group" aria-label="Text size">
+      <button class="sbtn" id="zOut" aria-label="Smaller text">A&minus;</button>
+      <button class="sbtn" id="zIn" aria-label="Larger text">A+</button>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="t-structure" aria-controls="p-structure" data-tab="structure">Structure</button>
+    <button class="tab" role="tab" id="t-purpose" aria-controls="p-purpose" data-tab="purpose">Purpose</button>
+    <button class="tab" role="tab" id="t-uses" aria-controls="p-uses" data-tab="uses">Uses</button>
+    <button class="tab" role="tab" id="t-compare" aria-controls="p-compare" data-tab="compare">Compare</button>
+    <button class="tab" role="tab" id="t-errors" aria-controls="p-errors" data-tab="errors">Mistakes</button>
+    <button class="tab" role="tab" id="t-check" aria-controls="p-check" data-tab="check">Check</button>
+  </div>
+
+  <!-- STRUCTURE -->
+  <section class="panel" role="tabpanel" id="p-structure" aria-labelledby="t-structure">
+    <div class="stage">
+      <p class="eyebrow">Formula</p>
+      <div class="formula" id="formula"></div>
+      <p class="eyebrow">Sentence</p>
+      <p class="sentence" id="sentence"></p>
+    </div>
+    <div class="controls">
+      <button class="btn primary" id="next">Next part</button>
+      <button class="btn" id="swap">Swap the clauses</button>
+      <button class="btn" id="when">Switch if / when</button>
+      <button class="btn" id="tenses" aria-pressed="false">Show verb tenses</button>
+      <button class="btn" id="newex">New example</button>
+    </div>
+    <div class="note" id="note" aria-live="polite"></div>
+  </section>
+
+  <!-- PURPOSE -->
+  <section class="panel" role="tabpanel" id="p-purpose" aria-labelledby="t-purpose" hidden>
+    <div class="stage">
+      <p class="eyebrow">The idea</p>
+      <h2 class="big">We use the zero conditional to talk about things that are <em>always true</em>.</h2>
+    </div>
+    <div class="card">
+      <p class="eyebrow">Test it</p>
+      <p class="sentence sm" id="trialSentence"></p>
+      <div class="controls">
+        <button class="btn primary" id="run">Run it again</button>
+        <button class="btn" id="resetTrial">Reset</button>
+        <button class="btn" id="newex2">New example</button>
+      </div>
+      <ol class="slots" id="slots"></ol>
+      <p class="verdict" id="trialVerdict" aria-live="polite"></p>
+    </div>
+    <div class="tiles" id="ideaTiles"></div>
+    <div class="note" id="ideaNote" aria-live="polite"></div>
+  </section>
+
+  <!-- USES -->
+  <section class="panel" role="tabpanel" id="p-uses" aria-labelledby="t-uses" hidden>
+    <div class="tiles" id="useTiles"></div>
+    <div class="note" id="useNote" aria-live="polite"></div>
+  </section>
+
+  <!-- COMPARE -->
+  <section class="panel" role="tabpanel" id="p-compare" aria-labelledby="t-compare" hidden>
+    <div class="pair" id="pair"></div>
+    <div class="diff" id="diff"></div>
+    <div class="controls">
+      <button class="btn" id="diffAll">Reveal all</button>
+      <button class="btn" id="diffNone">Hide all</button>
+    </div>
+  </section>
+
+  <!-- MISTAKES -->
+  <section class="panel" role="tabpanel" id="p-errors" aria-labelledby="t-errors" hidden>
+    <div class="grid2" id="errGrid"></div>
+  </section>
+
+  <!-- CHECK -->
+  <section class="panel" role="tabpanel" id="p-check" aria-labelledby="t-check" hidden>
+    <p class="eyebrow">Is it a zero conditional? Ask the class, then click to see.</p>
+    <div class="grid2" id="chkGrid"></div>
+    <div class="controls">
+      <button class="btn" id="chkAll">Reveal all</button>
+      <button class="btn" id="chkNone">Hide all</button>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var cap=function(s){return s.charAt(0).toUpperCase()+s.slice(1)};
+
+/* ---------- data ---------- */
+// i = if-clause, r = result clause. t = third person singular (takes -s).
+var EX=[
+  {i:{s:"you",v:"heat",r:"ice"},r:{s:"it",v:"melts",r:"",t:1}},
+  {i:{s:"water",v:"reaches",r:"100°C",t:1},r:{s:"it",v:"boils",r:"",t:1}},
+  {i:{s:"I",v:"miss",r:"the bus"},r:{s:"I",v:"walk",r:"to work"}},
+  {i:{s:"you",v:"press",r:"this button"},r:{s:"the door",v:"opens",r:"",t:1}},
+  {i:{s:"it",v:"rains",r:"",t:1},r:{s:"the grass",v:"gets",r:"wet",t:1}}
+];
+var IDEAS=[
+  {l:"Always true",q:"The same result every time",t:"Always true",
+   b:"Each time the condition happens, the result happens too. There is no “maybe”.",
+   ex:["If","you heat ice","it melts"]},
+  {l:"Any time",q:"Past, present and future",t:"True at any time",
+   b:"The sentence is not about one day. It was true before, it is true now, and it will be true tomorrow.",
+   ex:["When","the sun sets","it gets dark"]},
+  {l:"Two present simples",q:"The verb pattern",t:"Present simple + present simple",
+   b:"Both verbs are in the present simple. This shows that the link is general, not one single event.",
+   ex:["If","you <b class=\"verb\">heat</b> ice","it <b class=\"verb\">melts</b>"],tn:1}
+];
+var USES=[
+  {l:"Science facts",q:"What is always true in nature?",k:"Facts that are true everywhere.",
+   ex:[["If","you heat ice","it melts"],["If","water reaches 100°C","it boils"],["If","you mix red and blue","you get purple"]]},
+  {l:"Habits and routines",q:"What do I do every time?",k:"Things we do again and again.",
+   ex:[["If","I miss the bus","I walk to work"],["When","I wake up early","I go for a run"],["If","it is Sunday","we visit my grandmother"]]},
+  {l:"Rules and instructions",q:"What does a rule make happen?",k:"What always happens when we follow or break a rule.",
+   ex:[["If","you press this button","the door opens"],["If","a student is late","they sign in at reception"],["When","the light turns red","cars stop"]]},
+  {l:"Cause and effect",q:"What does one thing cause?",k:"One thing causes another, every time.",
+   ex:[["If","I drink coffee late","I can’t sleep"],["If","you do not water a plant","it dies"],["If","it rains","the grass gets wet"]]}
+];
+var DIFF=[
+  ["Structure","If + present simple, present simple","If + present simple, will + base verb"],
+  ["Meaning","Always true: facts, habits, rules","A possible event in one situation"],
+  ["Time","Any time: past, present and future","One specific moment in the future"],
+  ["Certainty","It happens every time","It might happen. It might not."]
+];
+var ERR=[
+  {n:"Will in the if-clause",p:["If you ",["will heat","heat"]," ice, it melts."],why:"The if-clause uses the present simple. Do not put will in the if-clause."},
+  {n:"Mixed tenses",p:["If you ",["heated","heat"]," ice, it melts."],why:"Keep both verbs in the present simple. A past verb does not match a present result."},
+  {n:"Missing -s",p:["If you heat ice, it ",["melt","melts"],"."],why:"After he, she and it, the present simple verb takes -s: it melts."},
+  {n:"Would in the result",p:["If you heat ice, it ",["would melt","melts"],"."],why:"Would is for imaginary situations. The zero conditional is real and always true, so use the present simple."}
+];
+var CHK=[
+  ["If you mix red and blue, you get purple.",true,"Zero conditional. Both verbs are present simple, and it is always true."],
+  ["If it rains tomorrow, we will cancel the picnic.",false,"First conditional. It is one possible future event, and the result uses will."],
+  ["When you press this button, the machine stops.",true,"Zero conditional. “When” can replace “if”, and both verbs are present simple."],
+  ["If I were rich, I would travel the world.",false,"Second conditional. It is an imaginary situation, with were and would."],
+  ["If students arrive late, they miss the start.",true,"Zero conditional. It is a general rule with two present simple verbs."],
+  ["If you heat ice, it melted.",false,"Not correct. The tenses do not match. Use the present simple in both clauses: it melts."]
+];
+var TABS=["structure","purpose","uses","compare","errors","check"];
+
+/* ---------- state ---------- */
+var S={tab:"structure",ex:0,swap:false,when:false,tenses:false,sel:"ifclause",trials:1,fresh:false,idea:0,use:0,
+  diff:[false,false,false,false],fix:[false,false,false,false],chk:[false,false,false,false,false,false]};
+
+/* ---------- helpers ---------- */
+function cl(c,first){return '<span class="subj">'+(first?cap(c.s):c.s)+'</span> <b class="verb">'+c.v+'</b>'+(c.r?' '+c.r:'')}
+function plain(c){return c.s+' '+c.v+(c.r?' '+c.r:'')}
+function seg(cj,a,b){return '<span class="part conj static">'+cj+'</span> <span class="part ifc static">'+a+'</span>, <span class="part res static">'+b+'</span>.'}
+function s3(c){return c.t?', with -s after he, she or it':''}
+function back(sel){var n=$(sel);if(n)n.focus({preventScroll:true})}
+
+/* ---------- structure ---------- */
+function noteFor(){
+  var ex=EX[S.ex],cw=S.when?"when":"if",other=S.when?"if":"when",first=!S.swap;
+  switch(S.sel){
+    case "conj":return ["The conjunction: “"+cw+"”","It starts the condition. You can use “"+other+"” instead of “"+cw+"”. The meaning stays the same, because the result always happens.",cw+" = "+other];
+    case "ifclause":return ["The if-clause: the condition","Subject + present simple verb. It names the cause, the thing that happens first.","Verb: “"+ex.i.v+"” is present simple"+s3(ex.i)+". No will, no would."];
+    case "comma":return first
+      ?["The comma","When the if-clause comes first, put a comma after it.","If-clause first → use a comma."]
+      :["No comma","When the result comes first, do not put a comma before “"+cw+"”.","Result first → no comma."];
+    case "result":return ["The main clause: the result","Subject + present simple verb. It names what always happens after the condition.","Verb: “"+ex.r.v+"” is present simple"+s3(ex.r)+". No will."];
+    default:return ["Click a part","Choose any word group in the sentence or in the formula above. Click it again to clear the highlight.",""];
+  }
+}
+function renderStructure(){
+  var ex=EX[S.ex],cw=S.when?"when":"if",first=!S.swap,cj=first?cap(cw):cw;
+  function P(id,cls,inner){return '<span class="part '+cls+(S.sel===id?' on':'')+'" data-part="'+id+'" role="button" tabindex="0" aria-pressed="'+(S.sel===id)+'">'+inner+'</span>'}
+  function F(id,cls,txt){return '<span class="fchip '+cls+(S.sel===id?' on':'')+'" data-part="'+id+'" role="button" tabindex="0" aria-pressed="'+(S.sel===id)+'">'+txt+'</span>'}
+  var conjH=P("conj","conj",cj),ifH=P("ifclause","ifc",cl(ex.i,false)),resH=P("result","res",cl(ex.r,!first)),commaH=P("comma","comma",",");
+  var sEl=$("#sentence");
+  sEl.innerHTML=first?conjH+" "+ifH+commaH+" "+resH+".":resH+" "+conjH+" "+ifH+".";
+  sEl.classList.toggle("has-sel",!!S.sel);
+  sEl.classList.toggle("show-tenses",S.tenses);
+  var fIf=F("conj","conj",cj)+'<span class="fplus">+</span>'+F("ifclause","ifc","present simple");
+  var fRes=F("result","res","present simple");
+  var fC=first?F("comma","comma",","):F("comma","ghost","no comma");
+  var fEl=$("#formula");
+  fEl.innerHTML=first?fIf+fC+fRes:fRes+fC+fIf;
+  fEl.classList.toggle("has-sel",!!S.sel);
+  var n=noteFor();
+  $("#note").innerHTML="<h2>"+n[0]+"</h2><p class=\"b\">"+n[1]+"</p>"+(n[2]?"<p class=\"k\">"+n[2]+"</p>":"");
+  $("#tenses").setAttribute("aria-pressed",S.tenses);
+}
+function nextPart(){
+  var order=S.swap?["result","comma","conj","ifclause"]:["conj","ifclause","comma","result"];
+  var i=order.indexOf(S.sel);
+  S.sel=order[(i+1)%order.length];
+  renderStructure();
+}
+
+/* ---------- purpose ---------- */
+function renderPurpose(){
+  var ex=EX[S.ex],i,rows=[];
+  $("#trialSentence").innerHTML=seg("If",cl(ex.i,false),cl(ex.r,false));
+  for(i=1;i<=5;i++){
+    rows.push(i<=S.trials
+      ?'<li class="slot done'+(S.fresh&&i===S.trials?' fresh':'')+'"><span class="n">Trial '+i+'</span><span class="chip cond">If '+plain(ex.i)+'</span><span aria-hidden="true">→</span><span class="chip res">'+plain(ex.r)+'</span><span class="tick" aria-label="same result">✓</span></li>'
+      :'<li class="slot"><span class="n">Trial '+i+'</span><span>waiting</span></li>');
+  }
+  $("#slots").innerHTML=rows.join("");
+  $("#trialVerdict").textContent=S.trials<5
+    ?S.trials+" out of 5 so far. The same result each time."
+    :"5 out of 5. The same result every time. That is why both verbs are in the present simple.";
+  $("#run").disabled=S.trials>=5;
+  S.fresh=false;
+}
+function renderIdeas(){
+  $("#ideaTiles").innerHTML=IDEAS.map(function(d,i){
+    return '<button class="tile" data-idea="'+i+'" aria-pressed="'+(S.idea===i)+'"><span class="l">'+d.l+'</span><span class="q">'+d.q+'</span></button>';
+  }).join("");
+  var d=IDEAS[S.idea];
+  $("#ideaNote").innerHTML="<h2>"+d.t+"</h2><p class=\"b\">"+d.b+"</p><p class=\"sentence sm"+(d.tn?" show-tenses":"")+"\">"+seg(d.ex[0],d.ex[1],d.ex[2])+"</p>";
+}
+
+/* ---------- uses ---------- */
+function renderUses(){
+  $("#useTiles").innerHTML=USES.map(function(u,i){
+    return '<button class="tile" data-use="'+i+'" aria-pressed="'+(S.use===i)+'"><span class="l">'+u.l+'</span><span class="q">'+u.q+'</span></button>';
+  }).join("");
+  var u=USES[S.use];
+  $("#useNote").innerHTML="<h2>"+u.l+"</h2><p class=\"k\">"+u.k+"</p><ul class=\"exlist\">"+u.ex.map(function(e){
+    return '<li><p class="sentence sm">'+seg(e[0],e[1],e[2])+'</p></li>';
+  }).join("")+"</ul>";
+}
+
+/* ---------- compare ---------- */
+function tl(kind){
+  var labels=kind==="zero"?[["past",0,"s"],["now",40,"m"],["future",100,"e"]]:[["past",0,"s"],["now",40,"m"],["tomorrow",84,"m"]];
+  var mark=kind==="zero"?'<span class="tl-fill"></span>':'<span class="tl-dot"></span>';
+  return '<div class="tl" aria-hidden="true"><div class="tl-track">'+mark+'<span class="tl-now"></span></div><div class="tl-labels">'+
+    labels.map(function(l){return '<span class="a-'+l[2]+'" style="left:'+(l[2]==="s"?0:l[1])+'%'+(l[2]==="e"?';left:100%':'')+'">'+l[0]+'</span>'}).join("")+'</div></div>';
+}
+function renderPair(){
+  $("#pair").innerHTML=
+    '<article class="card"><h3>Zero conditional</h3><p class="sentence sm">'+seg("If","it rains","I <span class=\"dw\">take</span> an umbrella")+'</p>'+tl("zero")+
+    '<p class="cap"><strong>Any time. Every time.</strong> I take an umbrella whenever it rains. It is a habit.</p></article>'+
+    '<article class="card"><h3>First conditional</h3><p class="sentence sm">'+seg("If","it rains tomorrow","I <span class=\"dw\">will take</span> an umbrella")+'</p>'+tl("first")+
+    '<p class="cap"><strong>One moment.</strong> Only tomorrow. It may rain. It may not.</p></article>';
+}
+function renderDiff(){
+  $("#diff").innerHTML='<div class="dhead"><span></span><span>Zero conditional</span><span>First conditional</span></div>'+DIFF.map(function(r,i){
+    var o=S.diff[i];
+    return '<div class="drow'+(o?' open':'')+'" data-diff="'+i+'" role="button" tabindex="0" aria-expanded="'+o+'"><span class="dl">'+r[0]+'</span><span class="dc">'+(o?r[1]:'Click to reveal')+'</span><span class="dc">'+(o?r[2]:'Click to reveal')+'</span></div>';
+  }).join("");
+}
+
+/* ---------- mistakes ---------- */
+function renderErrors(){
+  $("#errGrid").innerHTML=ERR.map(function(e,i){
+    var f=S.fix[i];
+    var s=e.p.map(function(x){
+      if(typeof x==="string")return x;
+      return f?'<del>'+x[0]+'</del> <ins>'+x[1]+'</ins>':'<span class="wrong">'+x[0]+'</span>';
+    }).join("");
+    return '<article class="card"><p class="eyebrow">'+e.n+'</p><p class="esent">'+s+'</p><p class="why'+(f?' on':'')+'">'+(f?'✓ '+e.why:'What is wrong here?')+'</p>'+
+      '<div class="controls"><button class="btn'+(f?'':' primary')+'" data-fix="'+i+'">'+(f?'Show the mistake':'Fix it')+'</button></div></article>';
+  }).join("");
+}
+
+/* ---------- check ---------- */
+function renderCheck(){
+  $("#chkGrid").innerHTML=CHK.map(function(c,i){
+    var o=S.chk[i];
+    return '<button class="kcard" data-chk="'+i+'" aria-expanded="'+o+'"><span class="ks">'+c[0]+'</span>'+
+      (o?'<span class="verd '+(c[1]?'yes':'no')+'">'+(c[1]?'✓ Yes, zero conditional':'✗ No')+'</span><span class="kp">'+c[2]+'</span>'
+        :'<span class="kp">Click to see the answer</span>')+'</button>';
+  }).join("");
+}
+
+function renderAll(){renderStructure();renderPurpose();renderIdeas();renderUses();renderPair();renderDiff();renderErrors();renderCheck()}
+
+/* ---------- tabs ---------- */
+function showTab(name){
+  if(TABS.indexOf(name)<0)name="structure";
+  S.tab=name;
+  $$(".tab").forEach(function(b){var on=b.dataset.tab===name;b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1});
+  $$(".panel").forEach(function(p){p.hidden=p.id!=="p-"+name});
+}
+$(".tabs").addEventListener("keydown",function(e){
+  var i=TABS.indexOf(S.tab),n=-1;
+  if(e.key==="ArrowRight")n=(i+1)%TABS.length;
+  else if(e.key==="ArrowLeft")n=(i-1+TABS.length)%TABS.length;
+  else if(e.key==="Home")n=0;
+  else if(e.key==="End")n=TABS.length-1;
+  if(n>=0){e.preventDefault();showTab(TABS[n]);$("#t-"+TABS[n]).focus();location.hash=TABS[n]}
+});
+window.addEventListener("hashchange",function(){showTab(location.hash.slice(1))});
+
+/* ---------- zoom ---------- */
+var zoom=1;
+try{zoom=parseFloat(localStorage.getItem("zcb-zoom"))||1}catch(e){}
+function setZoom(v){
+  zoom=Math.min(1.5,Math.max(.85,Math.round(v*100)/100));
+  document.documentElement.style.setProperty("--zoom",zoom);
+  try{localStorage.setItem("zcb-zoom",String(zoom))}catch(e){}
+}
+setZoom(zoom);
+
+/* ---------- events ---------- */
+function setEx(i){S.ex=i;S.trials=1;S.sel=S.sel||"ifclause";renderStructure();renderPurpose()}
+document.addEventListener("keydown",function(e){
+  if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches('[role="button"]')){e.preventDefault();e.target.click()}
+});
+document.addEventListener("click",function(e){
+  var t=e.target,el;
+  if((el=t.closest("[data-tab]"))){showTab(el.dataset.tab);location.hash=el.dataset.tab;return}
+  if((el=t.closest("[data-part]"))){
+    var id=el.dataset.part,box=el.closest("#sentence")?"#sentence":"#formula";
+    S.sel=S.sel===id?null:id;renderStructure();back(box+' [data-part="'+id+'"]');return;
+  }
+  if((el=t.closest("[data-idea]"))){S.idea=+el.dataset.idea;renderIdeas();back('[data-idea="'+S.idea+'"]');return}
+  if((el=t.closest("[data-use]"))){S.use=+el.dataset.use;renderUses();back('[data-use="'+S.use+'"]');return}
+  if((el=t.closest("[data-diff]"))){var d=+el.dataset.diff;S.diff[d]=!S.diff[d];renderDiff();back('[data-diff="'+d+'"]');return}
+  if((el=t.closest("[data-fix]"))){var f=+el.dataset.fix;S.fix[f]=!S.fix[f];renderErrors();back('[data-fix="'+f+'"]');return}
+  if((el=t.closest("[data-chk]"))){var c=+el.dataset.chk;S.chk[c]=!S.chk[c];renderCheck();back('[data-chk="'+c+'"]');return}
+  if((el=t.closest("button[id]"))){
+    switch(el.id){
+      case "next":nextPart();break;
+      case "swap":S.swap=!S.swap;S.sel="comma";renderStructure();break;
+      case "when":S.when=!S.when;S.sel="conj";renderStructure();break;
+      case "tenses":S.tenses=!S.tenses;renderStructure();break;
+      case "newex":case "newex2":setEx((S.ex+1)%EX.length);break;
+      case "run":if(S.trials<5){S.trials++;S.fresh=true;renderPurpose()}break;
+      case "resetTrial":S.trials=1;renderPurpose();break;
+      case "diffAll":S.diff=S.diff.map(function(){return true});renderDiff();break;
+      case "diffNone":S.diff=S.diff.map(function(){return false});renderDiff();break;
+      case "chkAll":S.chk=S.chk.map(function(){return true});renderCheck();break;
+      case "chkNone":S.chk=S.chk.map(function(){return false});renderCheck();break;
+      case "zIn":setZoom(zoom+.1);break;
+      case "zOut":setZoom(zoom-.1);break;
+    }
+  }
+});
+
+renderAll();
+showTab(location.hash.slice(1));
+})();
+</script>
+
+</body></html>
